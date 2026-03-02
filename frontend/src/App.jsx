@@ -31,7 +31,7 @@ function App() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:3001/usuarios", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/usuarios`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre, email, password }),
@@ -57,7 +57,7 @@ function App() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:3001/usuarios/login", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -162,7 +162,7 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
   
     try {
       const token = localStorage.getItem("token");
-      await fetch(`http://localhost:3001/turnos/${id}`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/turnos/${id}`, {
         method: "PUT",
         headers: { 
           "Content-Type": "application/json",
@@ -180,9 +180,9 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
     let url;
   
     if (usuario.rol === "admin") {
-      url = "http://localhost:3001/turnos";
+      url = `${import.meta.env.VITE_API_URL}/turnos`;
     } else {
-      url = `http://localhost:3001/turnos/mis-turnos/${usuario.id}`;
+      url = `${import.meta.env.VITE_API_URL}/turnos/mis-turnos/${usuario.id}`;
     }
   
     try {
@@ -226,7 +226,7 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
   
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:3001/turnos", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/turnos`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -258,7 +258,7 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
 
   const eliminarTurno = async (id) => {
     const token = localStorage.getItem("token");
-    await fetch(`http://localhost:3001/turnos/${id}`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/turnos/${id}`, {
       method: "DELETE",
       headers: {
         "Authorization": `Bearer ${token}`

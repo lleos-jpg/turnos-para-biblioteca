@@ -23,6 +23,8 @@ app.get("/", (req, res) => {
 });
 
 // Levantar servidor
-app.listen(3001, () => {
-    console.log("Servidor corriendo en puerto 3001");
+const PORT = process.env.PORT || 3001;
+
+app.listen(PORT, () => {
+  console.log("Servidor corriendo en puerto", PORT);
 });
