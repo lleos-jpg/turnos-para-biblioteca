@@ -176,7 +176,7 @@ body {
 /* PANEL */
 .panel-container {
   min-height: 100vh;
-  background: #f3f4f6;
+  background: url('/panel-bg.jpg') center center / cover fixed;
 }
 
 .header {
@@ -726,7 +726,22 @@ body.dark-mode {
 }
 
 body.dark-mode .panel-container {
-  background: #111827;
+  background: url('/panel-bg.jpg') center center / cover fixed;
+  position: relative;
+}
+
+body.dark-mode .panel-container::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 0;
+  pointer-events: none;
+}
+
+body.dark-mode .panel-container > * {
+  position: relative;
+  z-index: 1;
 }
 
 body.dark-mode .auth-container {
