@@ -71,8 +71,10 @@ router.get("/", verificarToken, (req, res) => {
         }
         db.query("DELETE FROM turnos WHERE estado = 'reservado' AND fecha < ?", [hoy], (err) => {
             if (err) console.error(err);
-            const sql = `SELECT t.*, l.titulo as libro_titulo, l.autor as libro_autor
-                FROM turnos t LEFT JOIN libros l ON t.libro_id = l.id`;
+            const sql = `SELECT t.*, l.titulo as libro_titulo, l.autor as libro_autor,
+                u.nombre as usuario_nombre
+                FROM turnos t LEFT JOIN libros l ON t.libro_id = l.id
+                LEFT JOIN usuarios u ON t.usuario_id = u.id`;
             db.query(sql, (err, results) => {
                 if (err) return res.status(500).json({ error: err.message });
                 res.json(results);

@@ -86,6 +86,7 @@ function App() {
           <span className="auth-logo-icon">📚</span>
           <h1>BiblioWait</h1>
           <p className="auth-subtitle">Sistema de reserva de libros</p>
+          <p className="auth-frase">"Un lector vive mil vidas antes de morir"</p>
         </div>
         <div className="tab-buttons">
           <button className={modo === "login" ? "tab active" : "tab"} onClick={() => setModo("login")}>
@@ -339,6 +340,7 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
           <div>
             <h1>BiblioWait</h1>
             <p className="user-info">{usuario.nombre} · {usuario.rol}</p>
+            <p className="header-tagline">Tu biblioteca digital de reservas</p>
           </div>
         </div>
         <div className="header-actions">
@@ -525,6 +527,9 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
                     <div className="card-header">
                       <span className="fecha">📅 {formatearFecha(turno.fecha)}</span>
                       <span className="hora">🕐 {turno.hora} hs</span>
+                      {usuario.rol === "admin" && turno.usuario_nombre && (
+                        <span className="usuario-nombre">👤 {turno.usuario_nombre}</span>
+                      )}
                     </div>
                     <div className="card-body">
                       {usuario.rol === "admin" ? (
