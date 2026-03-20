@@ -347,14 +347,6 @@ body {
   margin-top: 2px;
 }
 
-.libro-codigo {
-  color: #105666;
-  font-size: 11px;
-  font-weight: 600;
-  margin-top: 3px;
-  letter-spacing: 0.5px;
-}
-
 .libro-stock {
   display: flex;
   flex-direction: column;
@@ -577,14 +569,6 @@ body {
   margin-top: 2px;
 }
 
-.card-libro-codigo {
-  color: #105666;
-  font-size: 11px;
-  font-weight: 600;
-  margin-top: 3px;
-  letter-spacing: 0.5px;
-}
-
 .card-header {
   display: flex;
   gap: 16px;
@@ -787,14 +771,8 @@ body.dark-mode .subtabs {
   background: #374151;
 }
 
-body.dark-mode .subtab {
-  color: #9ca3af;
-}
-
-body.dark-mode .subtab.active {
-  background: #105666;
-  color: white;
-}
+body.dark-mode .subtab { color: #9ca3af; }
+body.dark-mode .subtab.active { background: #105666; color: white; }
 
 body.dark-mode .tabla-prestados th {
   background: #374151;
@@ -809,16 +787,6 @@ body.dark-mode .tabla-prestados td {
 
 body.dark-mode .tabla-prestados tr:hover td {
   background: #374151;
-}
-
-body.dark-mode .codigo-tag {
-  background: #1e3a5f;
-  color: #93c5fd;
-}
-
-body.dark-mode .libro-codigo,
-body.dark-mode .card-libro-codigo {
-  color: #67e8f9;
 }
 
 body.dark-mode .stock-controls {

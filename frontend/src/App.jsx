@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import './App.css'
 
 function App() {
@@ -126,7 +126,8 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
   const [nuevoLibroAutor, setNuevoLibroAutor] = useState("");
   const [nuevoLibroStock, setNuevoLibroStock] = useState(1);
   const [prestados, setPrestados] = useState([]);
-  const [vistaAdminSub, setVistaAdminSub] = useState("reservas"); // reservas | prestados
+  const [vistaAdminSub, setVistaAdminSub] = useState("reservas");
+  const turnosRef = useRef([]);
 
   const token = localStorage.getItem("token");
   const authHeader = { "Authorization": `Bearer ${token}` };
@@ -143,7 +144,26 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
     try {
       const response = await fetch(url, { headers: authHeader });
       const data = await response.json();
-      setTurnos(Array.isArray(data) ? data : []);
+      if (!Array.isArray(data)) return;
+
+      if (usuario.rol !== "admin" && turnosRef.current.length > 0) {
+        // Detectar cambios de estado
+        turnosRef.current.forEach(turnoAnterior => {
+          const turnoActual = data.find(t => t.id === turnoAnterior.id);
+          if (!turnoActual) {
+            mostrarNotificacion(`🗑️ Tu reserva de "${turnoAnterior.libro_titulo || "un libro"}" fue eliminada por el administrador.`);
+          } else if (turnoActual.estado !== turnoAnterior.estado) {
+            if (turnoActual.estado === "reservado") {
+              mostrarNotificacion(`✅ Tu reserva de "${turnoActual.libro_titulo}" fue confirmada.`);
+            } else if (turnoActual.estado === "cancelado") {
+              mostrarNotificacion(`❌ Tu reserva de "${turnoActual.libro_titulo}" fue cancelada. Podés intentar reservar en otro momento.`);
+            }
+          }
+        });
+      }
+
+      turnosRef.current = data;
+      setTurnos(data);
     } catch (error) {
       console.error("Error obteniendo turnos:", error);
     }
@@ -173,6 +193,13 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
     obtenerTurnos();
     obtenerLibros();
     if (usuario.rol === "admin") obtenerPrestados();
+
+    if (usuario.rol !== "admin") {
+      const intervalo = setInterval(() => {
+        obtenerTurnos();
+      }, 15000);
+      return () => clearInterval(intervalo);
+    }
   }, []);
 
   const actualizarEstado = async (id, nuevoEstado, estadoAnterior) => {
@@ -246,7 +273,7 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
         mostrarNotificacion("❌ " + data.mensaje);
         return;
       }
-      mostrarNotificacion(`✅ Libro agregado — Código: ${data.codigo}`);
+      mostrarNotificacion(`✅ Libro agregado correctamente`);
       setNuevoLibroTitulo(""); setNuevoLibroAutor(""); setNuevoLibroStock(1);
       obtenerLibros();
     } catch {
@@ -351,7 +378,6 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
                     <div>
                       <p className="libro-titulo">{libro.titulo}</p>
                       <p className="libro-autor">{libro.autor}</p>
-                      <p className="libro-codigo">{libro.codigo}</p>
                     </div>
                   </div>
                   <div className="libro-stock">
@@ -403,7 +429,6 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
                     <thead>
                       <tr>
                         <th>Libro</th>
-                        <th>Código</th>
                         <th>Usuario</th>
                         <th>Email</th>
                         <th>Fecha retiro</th>
@@ -414,7 +439,6 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
                       {prestados.map(p => (
                         <tr key={p.id}>
                           <td><strong>{p.libro_titulo}</strong><br/><span className="tabla-autor">{p.libro_autor}</span></td>
-                          <td><span className="codigo-tag">{p.libro_codigo}</span></td>
                           <td>{p.usuario_nombre}</td>
                           <td>{p.usuario_email}</td>
                           <td>{formatearFecha(p.fecha)}</td>
@@ -428,7 +452,7 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
             )}
 
             {/* GRID RESERVAS */}
-            {vistaAdminSub === "reservas" && (
+            {(usuario.rol !== "admin" || vistaAdminSub === "reservas") && (
               <div className="turnos-grid">
                 {turnosFiltrados.map((turno) => (
                   <div key={turno.id} className={`card estado-${turno.estado}`}>
@@ -437,7 +461,6 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
                       <div>
                         <p className="card-libro-titulo">{turno.libro_titulo || "Sin libro asignado"}</p>
                         <p className="card-libro-autor">{turno.libro_autor || ""}</p>
-                        {turno.libro_codigo && <p className="card-libro-codigo">{turno.libro_codigo}</p>}
                       </div>
                     </div>
                     <div className="card-header">
@@ -458,37 +481,6 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
                           {turno.estado === "cancelado" && "❌ Cancelado"}
                         </div>
                       )}
-                    </div>
-                    <button onClick={() => eliminarTurno(turno.id)} className="btn-delete">🗑️ Eliminar</button>
-                  </div>
-                ))}
-                {turnosFiltrados.length === 0 && <p className="empty-msg">No hay reservas para mostrar.</p>}
-              </div>
-            )}
-
-            {/* GRID USUARIO NORMAL */}
-            {usuario.rol !== "admin" && (
-              <div className="turnos-grid">
-                {turnosFiltrados.map((turno) => (
-                  <div key={turno.id} className={`card estado-${turno.estado}`}>
-                    <div className="card-libro">
-                      <span className="card-libro-icon">📖</span>
-                      <div>
-                        <p className="card-libro-titulo">{turno.libro_titulo || "Sin libro asignado"}</p>
-                        <p className="card-libro-autor">{turno.libro_autor || ""}</p>
-                        {turno.libro_codigo && <p className="card-libro-codigo">{turno.libro_codigo}</p>}
-                      </div>
-                    </div>
-                    <div className="card-header">
-                      <span className="fecha">📅 {formatearFecha(turno.fecha)}</span>
-                      <span className="hora">🕐 {turno.hora} hs</span>
-                    </div>
-                    <div className="card-body">
-                      <div className="estado-badge">
-                        {turno.estado === "pendiente" && "⏳ Pendiente de aprobación"}
-                        {turno.estado === "reservado" && "✅ Reserva confirmada"}
-                        {turno.estado === "cancelado" && "❌ Cancelado"}
-                      </div>
                     </div>
                     <button onClick={() => eliminarTurno(turno.id)} className="btn-delete">🗑️ Eliminar</button>
                   </div>

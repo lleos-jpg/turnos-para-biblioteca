@@ -25,21 +25,14 @@ router.post("/", verificarToken, (req, res) => {
 
     const stock = parseInt(stock_total) || 1;
 
-    // Generar código único: BIB-XXXX
-    db.query("SELECT COUNT(*) as total FROM libros", (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        const numero = String(rows[0].total + 1).padStart(4, "0");
-        const codigo = `BIB-${numero}`;
-
-        db.query(
-            "INSERT INTO libros (titulo, autor, codigo, stock_total, stock_disponible) VALUES (?, ?, ?, ?, ?)",
-            [titulo, autor, codigo, stock, stock],
-            (err) => {
-                if (err) return res.status(500).json({ error: err.message });
-                res.status(201).json({ mensaje: "Libro agregado correctamente", codigo });
-            }
-        );
-    });
+    db.query(
+        "INSERT INTO libros (titulo, autor, stock_total, stock_disponible) VALUES (?, ?, ?, ?)",
+        [titulo, autor, stock, stock],
+        (err) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.status(201).json({ mensaje: "Libro agregado correctamente" });
+        }
+    );
 });
 
 // Actualizar stock (solo admin)

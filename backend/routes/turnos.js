@@ -23,7 +23,7 @@ router.get("/mis-turnos/:usuario_id", verificarToken, (req, res) => {
         }
         db.query("DELETE FROM turnos WHERE estado = 'reservado' AND fecha < ? AND usuario_id = ?", [hoy, usuario_id], (err) => {
             if (err) console.error(err);
-            const sql = `SELECT t.*, l.titulo as libro_titulo, l.autor as libro_autor, l.codigo as libro_codigo
+            const sql = `SELECT t.*, l.titulo as libro_titulo, l.autor as libro_autor
                 FROM turnos t LEFT JOIN libros l ON t.libro_id = l.id WHERE t.usuario_id = ?`;
             db.query(sql, [usuario_id], (err, results) => {
                 if (err) return res.status(500).json({ error: err.message });
@@ -42,7 +42,7 @@ router.get("/prestados", verificarToken, (req, res) => {
     const sql = `
         SELECT t.id, t.fecha, t.hora, t.estado,
                u.nombre as usuario_nombre, u.email as usuario_email,
-               l.titulo as libro_titulo, l.autor as libro_autor, l.codigo as libro_codigo
+               l.titulo as libro_titulo, l.autor as libro_autor
         FROM turnos t
         JOIN usuarios u ON t.usuario_id = u.id
         LEFT JOIN libros l ON t.libro_id = l.id
@@ -71,7 +71,7 @@ router.get("/", verificarToken, (req, res) => {
         }
         db.query("DELETE FROM turnos WHERE estado = 'reservado' AND fecha < ?", [hoy], (err) => {
             if (err) console.error(err);
-            const sql = `SELECT t.*, l.titulo as libro_titulo, l.autor as libro_autor, l.codigo as libro_codigo
+            const sql = `SELECT t.*, l.titulo as libro_titulo, l.autor as libro_autor
                 FROM turnos t LEFT JOIN libros l ON t.libro_id = l.id`;
             db.query(sql, (err, results) => {
                 if (err) return res.status(500).json({ error: err.message });
