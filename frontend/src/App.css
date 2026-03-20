@@ -176,7 +176,7 @@ body {
 /* PANEL */
 .panel-container {
   min-height: 100vh;
-  background: url('/libros-bg.jpg') center center / cover fixed;
+  background: #f3f4f6;
 }
 
 .header {
