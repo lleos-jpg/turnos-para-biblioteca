@@ -6,7 +6,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-  background: linear-gradient(135deg, #105666 0%, #0A3323 100%);
+  background: url('/notebook-bg.jpg') center center / cover fixed;
   min-height: 100vh;
 }
 
@@ -17,7 +17,7 @@ body {
   align-items: center;
   min-height: 100vh;
   padding: 20px;
-  background: linear-gradient(135deg, #105666 0%, #0A3323 100%);
+  background: rgba(0,0,0,0.35);
   position: relative;
   overflow: hidden;
 }
@@ -176,7 +176,7 @@ body {
 /* PANEL */
 .panel-container {
   min-height: 100vh;
-  background: #f0ede8;
+  background: rgba(240, 237, 232, 0.55);
 }
 
 .header {
@@ -722,11 +722,15 @@ body {
 
 /* DARK MODE */
 body.dark-mode {
-  background: #111827;
+  background: url('/notebook-bg.jpg') center center / cover fixed;
 }
 
 body.dark-mode .panel-container {
-  background: #111827;
+  background: rgba(10, 15, 25, 0.88);
+}
+
+body.dark-mode .auth-container {
+  background: rgba(10, 15, 25, 0.82);
 }
 
 body.dark-mode .auth-frase {
