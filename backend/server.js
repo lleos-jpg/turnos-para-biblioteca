@@ -14,6 +14,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/usuarios", usuariosRoutes);
 app.use("/turnos", turnosRoutes);
+app.use("/libros", require("./routes/libros"));
 
 
 

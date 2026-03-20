@@ -11,22 +11,21 @@ const { verificarToken } = require("../config/auth");
 router.get("/mis-turnos/:usuario_id", verificarToken, (req, res) => {
     const { usuario_id } = req.params;
 
-    // Eliminar turnos reservados cuya fecha ya pasó
     const hoy = new Date().toISOString().split("T")[0];
     const deleteSql = "DELETE FROM turnos WHERE estado = 'reservado' AND fecha < ? AND usuario_id = ?";
     
     db.query(deleteSql, [hoy, usuario_id], (err) => {
-        if (err) {
-            console.error("Error eliminando turnos pasados:", err);
-        }
+        if (err) console.error("Error eliminando turnos pasados:", err);
 
-        const sql = "SELECT * FROM turnos WHERE usuario_id = ?";
+        const sql = `
+            SELECT t.*, l.titulo as libro_titulo, l.autor as libro_autor 
+            FROM turnos t 
+            LEFT JOIN libros l ON t.libro_id = l.id 
+            WHERE t.usuario_id = ?
+        `;
 
         db.query(sql, [usuario_id], (err, results) => {
-            if (err) {
-                return res.status(500).json({ error: err.message });
-            }
-
+            if (err) return res.status(500).json({ error: err.message });
             res.json(results);
         });
     });
@@ -37,22 +36,20 @@ router.get("/mis-turnos/:usuario_id", verificarToken, (req, res) => {
 // 🔹 Obtener todos los turnos
 // ===============================
 router.get("/", verificarToken, (req, res) => {
-    // Eliminar turnos reservados cuya fecha ya pasó
     const hoy = new Date().toISOString().split("T")[0];
     const deleteSql = "DELETE FROM turnos WHERE estado = 'reservado' AND fecha < ?";
     
     db.query(deleteSql, [hoy], (err) => {
-        if (err) {
-            console.error("Error eliminando turnos pasados:", err);
-        }
+        if (err) console.error("Error eliminando turnos pasados:", err);
 
-        const sql = "SELECT * FROM turnos";
+        const sql = `
+            SELECT t.*, l.titulo as libro_titulo, l.autor as libro_autor 
+            FROM turnos t 
+            LEFT JOIN libros l ON t.libro_id = l.id
+        `;
 
         db.query(sql, (err, results) => {
-            if (err) {
-                return res.status(500).json({ error: err.message });
-            }
-
+            if (err) return res.status(500).json({ error: err.message });
             res.json(results);
         });
     });
@@ -63,39 +60,25 @@ router.get("/", verificarToken, (req, res) => {
 // 🔹 Crear turno
 // ===============================
 router.post("/", verificarToken, (req, res) => {
-    const { usuario_id, fecha, hora } = req.body;
+    const { usuario_id, fecha, hora, libro_id } = req.body;
 
-    console.log("Creando turno con:", { usuario_id, fecha, hora });
-
-    if (!usuario_id || !fecha || !hora) {
+    if (!usuario_id || !fecha || !hora || !libro_id) {
         return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
     }
 
-    // Verificar si ya existe un turno en esa fecha y hora
     const checkSql = "SELECT * FROM turnos WHERE fecha = ? AND hora = ?";
     
     db.query(checkSql, [fecha, hora], (err, results) => {
-        if (err) {
-            console.error("Error verificando duplicados:", err);
-            return res.status(500).json({ error: err.message });
-        }
+        if (err) return res.status(500).json({ error: err.message });
 
         if (results.length > 0) {
             return res.status(400).json({ mensaje: "Ya existe un turno en esa fecha y hora" });
         }
 
-        // Si no existe, crear el turno con estado pendiente
-        const sql = "INSERT INTO turnos (usuario_id, fecha, hora, estado) VALUES (?, ?, ?, 'pendiente')";
-        console.log("Ejecutando SQL:", sql);
-        console.log("Con valores:", [usuario_id, fecha, hora, 'pendiente']);
+        const sql = "INSERT INTO turnos (usuario_id, fecha, hora, estado, libro_id) VALUES (?, ?, ?, 'pendiente', ?)";
 
-        db.query(sql, [usuario_id, fecha, hora], (err, result) => {
-            if (err) {
-                console.error("Error insertando turno:", err);
-                return res.status(500).json({ error: err.message });
-            }
-
-            console.log("Turno creado exitosamente con ID:", result.insertId);
+        db.query(sql, [usuario_id, fecha, hora, libro_id], (err, result) => {
+            if (err) return res.status(500).json({ error: err.message });
             res.status(201).json({ mensaje: "Turno creado correctamente" });
         });
     });
