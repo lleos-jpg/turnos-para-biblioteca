@@ -127,7 +127,16 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
   const [nuevoLibroStock, setNuevoLibroStock] = useState(1);
   const [prestados, setPrestados] = useState([]);
   const [vistaAdminSub, setVistaAdminSub] = useState("reservas");
+  const [buzon, setBuzon] = useState([]);
+  const [buzonAbierto, setBuzonAbierto] = useState(false);
   const turnosRef = useRef([]);
+
+  const BUZON_KEY = `buzon_${usuario.id}`;
+
+  const guardarBuzon = (nuevas) => {
+    localStorage.setItem(BUZON_KEY, JSON.stringify(nuevas));
+    setBuzon(nuevas);
+  };
 
   const token = localStorage.getItem("token");
   const authHeader = { "Authorization": `Bearer ${token}` };
@@ -147,19 +156,23 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
       if (!Array.isArray(data)) return;
 
       if (usuario.rol !== "admin" && turnosRef.current.length > 0) {
-        // Detectar cambios de estado
+        const nuevas = [];
         turnosRef.current.forEach(turnoAnterior => {
           const turnoActual = data.find(t => t.id === turnoAnterior.id);
           if (!turnoActual) {
-            mostrarNotificacion(`🗑️ Tu reserva de "${turnoAnterior.libro_titulo || "un libro"}" fue eliminada por el administrador.`);
+            nuevas.push({ id: Date.now() + Math.random(), texto: `🗑️ Tu reserva de "${turnoAnterior.libro_titulo || "un libro"}" fue eliminada por el administrador.`, fecha: new Date().toLocaleString() });
           } else if (turnoActual.estado !== turnoAnterior.estado) {
             if (turnoActual.estado === "reservado") {
-              mostrarNotificacion(`✅ Tu reserva de "${turnoActual.libro_titulo}" fue confirmada.`);
+              nuevas.push({ id: Date.now() + Math.random(), texto: `✅ Tu reserva de "${turnoActual.libro_titulo}" fue confirmada.`, fecha: new Date().toLocaleString() });
             } else if (turnoActual.estado === "cancelado") {
-              mostrarNotificacion(`❌ Tu reserva de "${turnoActual.libro_titulo}" fue cancelada. Podés intentar reservar en otro momento.`);
+              nuevas.push({ id: Date.now() + Math.random(), texto: `❌ Tu reserva de "${turnoActual.libro_titulo}" fue cancelada. Podés intentar reservar en otro momento.`, fecha: new Date().toLocaleString() });
             }
           }
         });
+        if (nuevas.length > 0) {
+          const actuales = JSON.parse(localStorage.getItem(`buzon_${usuario.id}`) || "[]");
+          guardarBuzon([...nuevas, ...actuales]);
+        }
       }
 
       turnosRef.current = data;
@@ -195,6 +208,9 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
     if (usuario.rol === "admin") obtenerPrestados();
 
     if (usuario.rol !== "admin") {
+      const guardado = localStorage.getItem(`buzon_${usuario.id}`);
+      if (guardado) setBuzon(JSON.parse(guardado));
+
       const intervalo = setInterval(() => {
         obtenerTurnos();
       }, 15000);
@@ -333,11 +349,46 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
           <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
             {darkMode ? "☀️" : "🌙"}
           </button>
+          {usuario.rol !== "admin" && (
+            <button className="btn-buzon" onClick={() => setBuzonAbierto(!buzonAbierto)}>
+              📩 {buzon.length > 0 && <span className="buzon-badge">{buzon.length}</span>}
+            </button>
+          )}
           <button onClick={cerrarSesion} className="btn-logout">Cerrar sesión</button>
         </div>
       </header>
 
       <div className="content">
+
+        {/* BUZÓN DE NOTIFICACIONES */}
+        {usuario.rol !== "admin" && buzonAbierto && (
+          <section className="buzon-section">
+            <div className="section-header">
+              <h2>📩 Notificaciones</h2>
+              <div style={{ display: "flex", gap: "10px" }}>
+                {buzon.length > 0 && (
+                  <button className="btn-delete" onClick={() => guardarBuzon([])}>Limpiar todo</button>
+                )}
+                <button className="btn-delete" onClick={() => setBuzonAbierto(false)}>Cerrar</button>
+              </div>
+            </div>
+            {buzon.length === 0 ? (
+              <p className="empty-msg">No tenés notificaciones.</p>
+            ) : (
+              <div className="buzon-lista">
+                {buzon.map(n => (
+                  <div key={n.id} className="buzon-item">
+                    <p className="buzon-texto">{n.texto}</p>
+                    <div className="buzon-footer">
+                      <span className="buzon-fecha">{n.fecha}</span>
+                      <button className="buzon-borrar" onClick={() => guardarBuzon(buzon.filter(x => x.id !== n.id))}>✕</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* VISTA USUARIO: CREAR RESERVA */}
         {usuario.rol !== "admin" && (

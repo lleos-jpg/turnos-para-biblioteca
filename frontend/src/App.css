@@ -793,7 +793,112 @@ body.dark-mode .stock-controls {
   color: #e5e7eb;
 }
 
-/* NOTIFICACIÓN */
+/* BUZÓN */
+.btn-buzon {
+  position: relative;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.btn-buzon:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.buzon-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.buzon-section {
+  background: white;
+  padding: 22px 25px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+  border: 1px solid #e5e7eb;
+}
+
+.buzon-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.buzon-item {
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.buzon-texto {
+  font-size: 14px;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.buzon-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.buzon-fecha {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.buzon-borrar {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.buzon-borrar:hover {
+  color: #ef4444;
+}
+
+/* DARK MODE BUZÓN */
+body.dark-mode .buzon-section {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+body.dark-mode .buzon-item {
+  background: #111827;
+  border-color: #374151;
+}
+
+body.dark-mode .buzon-texto {
+  color: #e5e7eb;
+}
 .notificacion {
   position: fixed;
   top: 70px;
