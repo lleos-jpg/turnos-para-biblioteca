@@ -272,6 +272,7 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
 
   const eliminarTurno = async (id) => {
     eliminadosPropiosRef.current.add(id);
+    turnosRef.current = turnosRef.current.filter(t => t.id !== id);
     await fetch(`${import.meta.env.VITE_API_URL}/turnos/${id}`, {
       method: "DELETE",
       headers: authHeader
