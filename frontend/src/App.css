@@ -347,6 +347,74 @@ body {
   margin-top: 2px;
 }
 
+.libro-codigo {
+  color: #105666;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 3px;
+  letter-spacing: 0.5px;
+}
+
+.libro-stock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+}
+
+.stock-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #10b981;
+  background: #d1fae5;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.stock-badge.sin-stock {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.stock-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.btn-stock {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  color: #374151;
+}
+
+.btn-stock:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.btn-stock:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.input-stock {
+  flex: 0 0 100px;
+  min-width: 80px;
+}
+
 /* TURNOS */
 .turnos-section {
   background: white;
@@ -363,6 +431,77 @@ body {
   margin-bottom: 18px;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.subtabs {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.subtab {
+  padding: 7px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  background: transparent;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.subtab.active {
+  background: #105666;
+  color: white;
+}
+
+/* TABLA PRESTADOS */
+.tabla-prestados {
+  overflow-x: auto;
+}
+
+.tabla-prestados table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tabla-prestados th {
+  background: #f3f4f6;
+  color: #374151;
+  font-weight: 600;
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tabla-prestados td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+  vertical-align: middle;
+}
+
+.tabla-prestados tr:hover td {
+  background: #f9fafb;
+}
+
+.tabla-autor {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.codigo-tag {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .section-header h2 {
@@ -436,6 +575,14 @@ body {
   color: #6b7280;
   font-size: 12px;
   margin-top: 2px;
+}
+
+.card-libro-codigo {
+  color: #105666;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 3px;
+  letter-spacing: 0.5px;
 }
 
 .card-header {
@@ -614,6 +761,68 @@ body.dark-mode .libro-item {
 
 body.dark-mode .card-libro {
   border-bottom-color: #374151;
+}
+
+body.dark-mode .stock-badge {
+  background: #064e3b;
+  color: #6ee7b7;
+}
+
+body.dark-mode .stock-badge.sin-stock {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+body.dark-mode .btn-stock {
+  background: #374151;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+body.dark-mode .btn-stock:hover:not(:disabled) {
+  background: #4b5563;
+}
+
+body.dark-mode .subtabs {
+  background: #374151;
+}
+
+body.dark-mode .subtab {
+  color: #9ca3af;
+}
+
+body.dark-mode .subtab.active {
+  background: #105666;
+  color: white;
+}
+
+body.dark-mode .tabla-prestados th {
+  background: #374151;
+  color: #e5e7eb;
+  border-bottom-color: #4b5563;
+}
+
+body.dark-mode .tabla-prestados td {
+  color: #d1d5db;
+  border-bottom-color: #374151;
+}
+
+body.dark-mode .tabla-prestados tr:hover td {
+  background: #374151;
+}
+
+body.dark-mode .codigo-tag {
+  background: #1e3a5f;
+  color: #93c5fd;
+}
+
+body.dark-mode .libro-codigo,
+body.dark-mode .card-libro-codigo {
+  color: #67e8f9;
+}
+
+body.dark-mode .stock-controls {
+  color: #e5e7eb;
 }
 
 /* NOTIFICACIÓN */

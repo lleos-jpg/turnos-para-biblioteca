@@ -124,6 +124,9 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
   const [vistaAdmin, setVistaAdmin] = useState("turnos");
   const [nuevoLibroTitulo, setNuevoLibroTitulo] = useState("");
   const [nuevoLibroAutor, setNuevoLibroAutor] = useState("");
+  const [nuevoLibroStock, setNuevoLibroStock] = useState(1);
+  const [prestados, setPrestados] = useState([]);
+  const [vistaAdminSub, setVistaAdminSub] = useState("reservas"); // reservas | prestados
 
   const token = localStorage.getItem("token");
   const authHeader = { "Authorization": `Bearer ${token}` };
@@ -156,19 +159,35 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
     }
   };
 
+  const obtenerPrestados = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/turnos/prestados`, { headers: authHeader });
+      const data = await response.json();
+      setPrestados(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error obteniendo prestados:", error);
+    }
+  };
+
   useEffect(() => {
     obtenerTurnos();
     obtenerLibros();
+    if (usuario.rol === "admin") obtenerPrestados();
   }, []);
 
-  const actualizarEstado = async (id, nuevoEstado) => {
+  const actualizarEstado = async (id, nuevoEstado, estadoAnterior) => {
     setTurnos(turnos.map(t => t.id === id ? { ...t, estado: nuevoEstado } : t));
+    if (nuevoEstado === "cancelado" && estadoAnterior !== "cancelado") {
+      mostrarNotificacion("⚠️ La reserva fue cancelada y el ejemplar volvió al stock");
+    }
     try {
       await fetch(`${import.meta.env.VITE_API_URL}/turnos/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({ estado: nuevoEstado, usuario_rol: usuario.rol }),
       });
+      obtenerLibros();
+      if (usuario.rol === "admin") obtenerPrestados();
     } catch (error) {
       obtenerTurnos();
     }
@@ -210,6 +229,8 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
       headers: authHeader
     });
     obtenerTurnos();
+    obtenerLibros();
+    if (usuario.rol === "admin") obtenerPrestados();
   };
 
   const agregarLibro = async (e) => {
@@ -218,19 +239,28 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/libros`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ titulo: nuevoLibroTitulo, autor: nuevoLibroAutor }),
+        body: JSON.stringify({ titulo: nuevoLibroTitulo, autor: nuevoLibroAutor, stock_total: nuevoLibroStock }),
       });
       const data = await response.json();
       if (!response.ok) {
         mostrarNotificacion("❌ " + data.mensaje);
         return;
       }
-      mostrarNotificacion("✅ Libro agregado correctamente");
-      setNuevoLibroTitulo(""); setNuevoLibroAutor("");
+      mostrarNotificacion(`✅ Libro agregado — Código: ${data.codigo}`);
+      setNuevoLibroTitulo(""); setNuevoLibroAutor(""); setNuevoLibroStock(1);
       obtenerLibros();
     } catch {
       mostrarNotificacion("❌ Error conectando con el servidor");
     }
+  };
+
+  const actualizarStock = async (id, nuevoStock) => {
+    await fetch(`${import.meta.env.VITE_API_URL}/libros/${id}/stock`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...authHeader },
+      body: JSON.stringify({ stock_total: nuevoStock }),
+    });
+    obtenerLibros();
   };
 
   const eliminarLibro = async (id) => {
@@ -290,8 +320,8 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
               <select value={libroId} onChange={(e) => setLibroId(e.target.value)} required className="select-libro">
                 <option value="">— Seleccionar libro —</option>
                 {libros.map(libro => (
-                  <option key={libro.id} value={libro.id}>
-                    {libro.titulo} — {libro.autor}
+                  <option key={libro.id} value={libro.id} disabled={libro.stock_disponible <= 0}>
+                    {libro.titulo} — {libro.autor} {libro.stock_disponible <= 0 ? "(Sin disponibilidad)" : `(${libro.stock_disponible} disponibles)`}
                   </option>
                 ))}
               </select>
@@ -302,27 +332,15 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
           </section>
         )}
 
-        {/* VISTA ADMIN: GESTIÓN DE LIBROS */}
         {usuario.rol === "admin" && vistaAdmin === "libros" && (
           <section className="libros-section">
             <div className="section-header">
               <h2>Catálogo de libros</h2>
             </div>
             <form onSubmit={agregarLibro} className="form-libro">
-              <input
-                type="text"
-                placeholder="Título del libro"
-                value={nuevoLibroTitulo}
-                onChange={(e) => setNuevoLibroTitulo(e.target.value)}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Autor"
-                value={nuevoLibroAutor}
-                onChange={(e) => setNuevoLibroAutor(e.target.value)}
-                required
-              />
+              <input type="text" placeholder="Título del libro" value={nuevoLibroTitulo} onChange={(e) => setNuevoLibroTitulo(e.target.value)} required />
+              <input type="text" placeholder="Autor" value={nuevoLibroAutor} onChange={(e) => setNuevoLibroAutor(e.target.value)} required />
+              <input type="number" placeholder="Ejemplares" min="1" value={nuevoLibroStock} onChange={(e) => setNuevoLibroStock(e.target.value)} required className="input-stock" />
               <button type="submit" className="btn-primary">Agregar libro</button>
             </form>
             <div className="libros-lista">
@@ -333,6 +351,17 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
                     <div>
                       <p className="libro-titulo">{libro.titulo}</p>
                       <p className="libro-autor">{libro.autor}</p>
+                      <p className="libro-codigo">{libro.codigo}</p>
+                    </div>
+                  </div>
+                  <div className="libro-stock">
+                    <span className={`stock-badge ${libro.stock_disponible <= 0 ? "sin-stock" : ""}`}>
+                      {libro.stock_disponible}/{libro.stock_total} disponibles
+                    </span>
+                    <div className="stock-controls">
+                      <button onClick={() => actualizarStock(libro.id, libro.stock_total - 1)} disabled={libro.stock_total <= 1} className="btn-stock">−</button>
+                      <span>{libro.stock_total}</span>
+                      <button onClick={() => actualizarStock(libro.id, libro.stock_total + 1)} className="btn-stock">+</button>
                     </div>
                   </div>
                   <button onClick={() => eliminarLibro(libro.id)} className="btn-delete">Eliminar</button>
@@ -348,48 +377,125 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
           <section className="turnos-section">
             <div className="section-header">
               <h2>{usuario.rol === "admin" ? "Todas las reservas" : "Mis reservas"}</h2>
-              <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className="filtro">
-                <option value="todos">Todos los estados</option>
-                <option value="pendiente">Pendiente</option>
-                <option value="reservado">Reservado</option>
-                <option value="cancelado">Cancelado</option>
-              </select>
+              {usuario.rol === "admin" && (
+                <div className="subtabs">
+                  <button className={vistaAdminSub === "reservas" ? "subtab active" : "subtab"} onClick={() => setVistaAdminSub("reservas")}>Reservas</button>
+                  <button className={vistaAdminSub === "prestados" ? "subtab active" : "subtab"} onClick={() => { setVistaAdminSub("prestados"); obtenerPrestados(); }}>Ejemplares prestados</button>
+                </div>
+              )}
+              {vistaAdminSub === "reservas" && (
+                <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className="filtro">
+                  <option value="todos">Todos los estados</option>
+                  <option value="pendiente">Pendiente</option>
+                  <option value="reservado">Reservado</option>
+                  <option value="cancelado">Cancelado</option>
+                </select>
+              )}
             </div>
 
-            <div className="turnos-grid">
-              {turnosFiltrados.map((turno) => (
-                <div key={turno.id} className={`card estado-${turno.estado}`}>
-                  <div className="card-libro">
-                    <span className="card-libro-icon">📖</span>
-                    <div>
-                      <p className="card-libro-titulo">{turno.libro_titulo || "Sin libro asignado"}</p>
-                      <p className="card-libro-autor">{turno.libro_autor || ""}</p>
+            {/* TABLA PRESTADOS */}
+            {usuario.rol === "admin" && vistaAdminSub === "prestados" && (
+              <div className="tabla-prestados">
+                {prestados.length === 0 ? (
+                  <p className="empty-msg">No hay ejemplares prestados actualmente.</p>
+                ) : (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Libro</th>
+                        <th>Código</th>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                        <th>Fecha retiro</th>
+                        <th>Hora</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {prestados.map(p => (
+                        <tr key={p.id}>
+                          <td><strong>{p.libro_titulo}</strong><br/><span className="tabla-autor">{p.libro_autor}</span></td>
+                          <td><span className="codigo-tag">{p.libro_codigo}</span></td>
+                          <td>{p.usuario_nombre}</td>
+                          <td>{p.usuario_email}</td>
+                          <td>{formatearFecha(p.fecha)}</td>
+                          <td>{p.hora} hs</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+
+            {/* GRID RESERVAS */}
+            {vistaAdminSub === "reservas" && (
+              <div className="turnos-grid">
+                {turnosFiltrados.map((turno) => (
+                  <div key={turno.id} className={`card estado-${turno.estado}`}>
+                    <div className="card-libro">
+                      <span className="card-libro-icon">📖</span>
+                      <div>
+                        <p className="card-libro-titulo">{turno.libro_titulo || "Sin libro asignado"}</p>
+                        <p className="card-libro-autor">{turno.libro_autor || ""}</p>
+                        {turno.libro_codigo && <p className="card-libro-codigo">{turno.libro_codigo}</p>}
+                      </div>
                     </div>
+                    <div className="card-header">
+                      <span className="fecha">📅 {formatearFecha(turno.fecha)}</span>
+                      <span className="hora">🕐 {turno.hora} hs</span>
+                    </div>
+                    <div className="card-body">
+                      {usuario.rol === "admin" ? (
+                        <select value={turno.estado} onChange={(e) => actualizarEstado(turno.id, e.target.value, turno.estado)} className="estado-select">
+                          <option value="pendiente">⏳ Pendiente</option>
+                          <option value="reservado">✅ Reservado</option>
+                          <option value="cancelado">❌ Cancelado</option>
+                        </select>
+                      ) : (
+                        <div className="estado-badge">
+                          {turno.estado === "pendiente" && "⏳ Pendiente de aprobación"}
+                          {turno.estado === "reservado" && "✅ Reserva confirmada"}
+                          {turno.estado === "cancelado" && "❌ Cancelado"}
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => eliminarTurno(turno.id)} className="btn-delete">🗑️ Eliminar</button>
                   </div>
-                  <div className="card-header">
-                    <span className="fecha">📅 {formatearFecha(turno.fecha)}</span>
-                    <span className="hora">🕐 {turno.hora} hs</span>
-                  </div>
-                  <div className="card-body">
-                    {usuario.rol === "admin" ? (
-                      <select value={turno.estado} onChange={(e) => actualizarEstado(turno.id, e.target.value)} className="estado-select">
-                        <option value="pendiente">⏳ Pendiente</option>
-                        <option value="reservado">✅ Reservado</option>
-                        <option value="cancelado">❌ Cancelado</option>
-                      </select>
-                    ) : (
+                ))}
+                {turnosFiltrados.length === 0 && <p className="empty-msg">No hay reservas para mostrar.</p>}
+              </div>
+            )}
+
+            {/* GRID USUARIO NORMAL */}
+            {usuario.rol !== "admin" && (
+              <div className="turnos-grid">
+                {turnosFiltrados.map((turno) => (
+                  <div key={turno.id} className={`card estado-${turno.estado}`}>
+                    <div className="card-libro">
+                      <span className="card-libro-icon">📖</span>
+                      <div>
+                        <p className="card-libro-titulo">{turno.libro_titulo || "Sin libro asignado"}</p>
+                        <p className="card-libro-autor">{turno.libro_autor || ""}</p>
+                        {turno.libro_codigo && <p className="card-libro-codigo">{turno.libro_codigo}</p>}
+                      </div>
+                    </div>
+                    <div className="card-header">
+                      <span className="fecha">📅 {formatearFecha(turno.fecha)}</span>
+                      <span className="hora">🕐 {turno.hora} hs</span>
+                    </div>
+                    <div className="card-body">
                       <div className="estado-badge">
                         {turno.estado === "pendiente" && "⏳ Pendiente de aprobación"}
                         {turno.estado === "reservado" && "✅ Reserva confirmada"}
                         {turno.estado === "cancelado" && "❌ Cancelado"}
                       </div>
-                    )}
+                    </div>
+                    <button onClick={() => eliminarTurno(turno.id)} className="btn-delete">🗑️ Eliminar</button>
                   </div>
-                  <button onClick={() => eliminarTurno(turno.id)} className="btn-delete">🗑️ Eliminar</button>
-                </div>
-              ))}
-              {turnosFiltrados.length === 0 && <p className="empty-msg">No hay reservas para mostrar.</p>}
-            </div>
+                ))}
+                {turnosFiltrados.length === 0 && <p className="empty-msg">No hay reservas para mostrar.</p>}
+              </div>
+            )}
           </section>
         )}
       </div>

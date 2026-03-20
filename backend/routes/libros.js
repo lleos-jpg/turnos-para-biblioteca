@@ -13,7 +13,7 @@ router.get("/", verificarToken, (req, res) => {
 
 // Agregar libro (solo admin)
 router.post("/", verificarToken, (req, res) => {
-    const { titulo, autor } = req.body;
+    const { titulo, autor, stock_total } = req.body;
 
     if (req.usuario.rol !== "admin") {
         return res.status(403).json({ mensaje: "Solo el admin puede agregar libros" });
@@ -23,9 +23,49 @@ router.post("/", verificarToken, (req, res) => {
         return res.status(400).json({ mensaje: "Título y autor son obligatorios" });
     }
 
-    db.query("INSERT INTO libros (titulo, autor) VALUES (?, ?)", [titulo, autor], (err, result) => {
+    const stock = parseInt(stock_total) || 1;
+
+    // Generar código único: BIB-XXXX
+    db.query("SELECT COUNT(*) as total FROM libros", (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.status(201).json({ mensaje: "Libro agregado correctamente" });
+        const numero = String(rows[0].total + 1).padStart(4, "0");
+        const codigo = `BIB-${numero}`;
+
+        db.query(
+            "INSERT INTO libros (titulo, autor, codigo, stock_total, stock_disponible) VALUES (?, ?, ?, ?, ?)",
+            [titulo, autor, codigo, stock, stock],
+            (err) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.status(201).json({ mensaje: "Libro agregado correctamente", codigo });
+            }
+        );
+    });
+});
+
+// Actualizar stock (solo admin)
+router.put("/:id/stock", verificarToken, (req, res) => {
+    if (req.usuario.rol !== "admin") {
+        return res.status(403).json({ mensaje: "Solo el admin puede modificar el stock" });
+    }
+    const { stock_total } = req.body;
+    const stock = parseInt(stock_total);
+    if (isNaN(stock) || stock < 0) {
+        return res.status(400).json({ mensaje: "Stock inválido" });
+    }
+    // Ajustar stock_disponible proporcionalmente
+    db.query("SELECT stock_total, stock_disponible FROM libros WHERE id = ?", [req.params.id], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (rows.length === 0) return res.status(404).json({ mensaje: "Libro no encontrado" });
+        const prestados = rows[0].stock_total - rows[0].stock_disponible;
+        const nuevo_disponible = Math.max(0, stock - prestados);
+        db.query(
+            "UPDATE libros SET stock_total = ?, stock_disponible = ? WHERE id = ?",
+            [stock, nuevo_disponible, req.params.id],
+            (err) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json({ mensaje: "Stock actualizado" });
+            }
+        );
     });
 });
 
