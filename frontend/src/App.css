@@ -176,7 +176,7 @@ body {
 /* PANEL */
 .panel-container {
   min-height: 100vh;
-  background: rgba(240, 237, 232, 0.55);
+  background: url('/livro-bg.jpg') center center / cover fixed;
 }
 
 .header {
@@ -275,7 +275,7 @@ body {
 }
 
 .crear-turno {
-  background: white;
+  background: rgba(255,255,255,0.92);
   padding: 22px 25px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -323,7 +323,7 @@ body {
 
 /* LIBROS */
 .libros-section {
-  background: white;
+  background: rgba(255,255,255,0.92);
   padding: 22px 25px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -462,7 +462,7 @@ body {
 
 /* TURNOS */
 .turnos-section {
-  background: white;
+  background: rgba(255,255,255,0.92);
   padding: 22px 25px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -726,7 +726,7 @@ body.dark-mode {
 }
 
 body.dark-mode .panel-container {
-  background: rgba(10, 15, 25, 0.88);
+  background: url('/livro-bg.jpg') center center / cover fixed;
 }
 
 body.dark-mode .auth-container {
@@ -898,7 +898,7 @@ body.dark-mode .stock-controls {
 }
 
 .buzon-section {
-  background: white;
+  background: rgba(255,255,255,0.92);
   padding: 22px 25px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
