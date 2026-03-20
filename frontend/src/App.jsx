@@ -130,6 +130,7 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
   const [buzon, setBuzon] = useState([]);
   const [buzonAbierto, setBuzonAbierto] = useState(false);
   const turnosRef = useRef([]);
+  const eliminadosPropiosRef = useRef(new Set());
 
   const BUZON_KEY = `buzon_${usuario.id}`;
 
@@ -160,7 +161,10 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
         turnosRef.current.forEach(turnoAnterior => {
           const turnoActual = data.find(t => t.id === turnoAnterior.id);
           if (!turnoActual) {
-            nuevas.push({ id: Date.now() + Math.random(), texto: `🗑️ Tu reserva de "${turnoAnterior.libro_titulo || "un libro"}" fue eliminada por el administrador.`, fecha: new Date().toLocaleString() });
+            if (!eliminadosPropiosRef.current.has(turnoAnterior.id)) {
+              nuevas.push({ id: Date.now() + Math.random(), texto: `🗑️ Tu reserva de "${turnoAnterior.libro_titulo || "un libro"}" fue eliminada.`, fecha: new Date().toLocaleString() });
+            }
+            eliminadosPropiosRef.current.delete(turnoAnterior.id);
           } else if (turnoActual.estado !== turnoAnterior.estado) {
             if (turnoActual.estado === "reservado") {
               nuevas.push({ id: Date.now() + Math.random(), texto: `✅ Tu reserva de "${turnoActual.libro_titulo}" fue confirmada.`, fecha: new Date().toLocaleString() });
@@ -267,6 +271,7 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
   };
 
   const eliminarTurno = async (id) => {
+    eliminadosPropiosRef.current.add(id);
     await fetch(`${import.meta.env.VITE_API_URL}/turnos/${id}`, {
       method: "DELETE",
       headers: authHeader
@@ -460,14 +465,16 @@ function Panel({ usuario, cerrarSesion, darkMode, setDarkMode }) {
                   <button className={vistaAdminSub === "prestados" ? "subtab active" : "subtab"} onClick={() => { setVistaAdminSub("prestados"); obtenerPrestados(); }}>Ejemplares prestados</button>
                 </div>
               )}
-              {vistaAdminSub === "reservas" && (
-                <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className="filtro">
-                  <option value="todos">Todos los estados</option>
-                  <option value="pendiente">Pendiente</option>
-                  <option value="reservado">Reservado</option>
-                  <option value="cancelado">Cancelado</option>
-                </select>
-              )}
+              <div style={{ marginLeft: "auto", display: "flex", gap: "10px", alignItems: "center" }}>
+                {vistaAdminSub === "reservas" && (
+                  <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className="filtro">
+                    <option value="todos">Todos los estados</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="reservado">Reservado</option>
+                    <option value="cancelado">Cancelado</option>
+                  </select>
+                )}
+              </div>
             </div>
 
             {/* TABLA PRESTADOS */}
